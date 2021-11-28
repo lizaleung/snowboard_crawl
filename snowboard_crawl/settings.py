@@ -108,7 +108,9 @@ HTTPERROR_ALLOWED_CODES  =[404]
 #     'db':'snowaddict'
 # }
 
-MYSQL_HOST = '127.0.0.1'
-MYSQL_DATABASE = 'snowaddict'
-MYSQL_USERNAME = 'admin'
-MYSQL_PASSWORD = 'ecoecoeco'
+
+
+MYSQL_HOST = os.environ.get("MYSQL_HOST")
+MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE")
+MYSQL_USERNAME = os.environ.get("MYSQL_USERNAME")
+MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD")
