@@ -5,7 +5,6 @@ import sys
 
 from snowboard_crawl.items import EvoSnowboardItem, EvoSnowboardImageItem
 
-
 class EvoSpider(scrapy.Spider):
     name = 'evo'
     allowed_domains = ['evo.com']
@@ -65,24 +64,15 @@ class EvoSpider(scrapy.Spider):
 
         data_dict = {}
         
-        # return True
         data_dump = re.match(r".*window\.dataLayerManager\.pushImpressions\((.*)\, \'Results", response.text, re.DOTALL).group(1)
-        # print(data_dump)
         data_json = json.loads(data_dump)
         for element in data_json:
             data_dict[element["_uniqueId"]] = element
-        # print(len(data_json))
-        # print(len(data_dict))
-
         return data_dict
-
 
     def mergeList (self, inputList):
         inputList = [s for s in inputList if s != "\n"]
         return " ".join(inputList)
-
-
-
 
     def parse_item_page(self, response):
         """
@@ -92,8 +82,6 @@ class EvoSpider(scrapy.Spider):
 
         item = response.meta["item"]
 
-        # get some product details and then save into an item
-        # response = response.css("div.pdp-primary-column")
         try:
             # Product
             description = response.css("div.pdp-details-content p ::text").extract_first()
@@ -152,7 +140,8 @@ class EvoSpider(scrapy.Spider):
         tmpName = item["name"].replace(item["brand"],"").lstrip()
         
         try:
-            item["year_processed"] = tmpName.split(" ")[-1]
+            if tmpName.split(" ")[-1] + 0:
+                item["year_processed"] = tmpName.split(" ")[-1]
         except:
             item["year_processed"] = 0
         

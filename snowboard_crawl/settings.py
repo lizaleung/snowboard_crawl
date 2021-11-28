@@ -101,16 +101,9 @@ HTTPERROR_ALLOWED_CODES  =[404]
 
 # DB
 
-# DB_CREDS = {
-#     'host':'',
-#     'user':'admin',
-#     'pass':'ecoecoeco',
-#     'db':'snowaddict'
-# }
-
-
-
 MYSQL_HOST = os.environ.get("MYSQL_HOST")
+print(MYSQL_HOST)
 MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE")
 MYSQL_USERNAME = os.environ.get("MYSQL_USERNAME")
+print(MYSQL_USERNAME)
 MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD")

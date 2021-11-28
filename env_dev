@@ -1,0 +1,4 @@
+export MYSQL_HOST=127.0.0.1
+export MYSQL_DATABASE=snowaddict
+export MYSQL_USERNAME=admin
+export MYSQL_PASSWORD=ecoecoeco
