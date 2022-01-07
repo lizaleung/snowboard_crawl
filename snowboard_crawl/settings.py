@@ -37,10 +37,10 @@ DOWNLOAD_DELAY = 1
 #TELNETCONSOLE_ENABLED = False
 
 # Override the default request headers:
-#DEFAULT_REQUEST_HEADERS = {
+# DEFAULT_REQUEST_HEADERS = {
 #   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
 #   'Accept-Language': 'en',
-#}
+# }
 
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
@@ -63,8 +63,12 @@ DOWNLOAD_DELAY = 1
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   'snowboard_crawl.pipelines.SnowboardCrawlPipeline': 1,
-   'snowboard_crawl.pipelines.MyImagesPipeline': 2,}
+   'snowboard_crawl.pipelines.SnowboardCrawlPipeline': 3,
+   # 'snowboard_crawl.pipelines.MyImagesPipeline': 2,
+   # 'scrapy.pipelines.images.ImagesPipeline': 2,   
+   'snowboard_crawl.pipelines.CustomImagePipeline': 2
+
+   }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
@@ -88,12 +92,12 @@ ITEM_PIPELINES = {
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
 
-IMAGES_STORE = './tmp'
+# IMAGES_STORE = './tmp'
 
 
-import datetime, os
+import os
 
-# outdir = os.environ.get("OUTDIR_BASE",'./data')
+IMAGES_STORE = os.environ.get("OUTDIR_BASE",'./tmp')
 outdir = "/Users/lizaleung/Documents/Github/snowaddict-django/media/gear"
 
 HTTPERROR_ALLOWED_CODES  =[404]
@@ -102,8 +106,9 @@ HTTPERROR_ALLOWED_CODES  =[404]
 # DB
 
 MYSQL_HOST = os.environ.get("MYSQL_HOST")
-print(MYSQL_HOST)
 MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE")
 MYSQL_USERNAME = os.environ.get("MYSQL_USERNAME")
-print(MYSQL_USERNAME)
 MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD")
+
+print(MYSQL_HOST)
+print(MYSQL_USERNAME)

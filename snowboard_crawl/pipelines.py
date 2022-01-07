@@ -13,14 +13,44 @@ import json
 import os
 import datetime
 
+from slugify import slugify
+import logging
+
 from scrapy.pipelines.images import ImagesPipeline
 from snowboard_crawl.settings import outdir
 
+import scrapy
 
 from itemadapter import ItemAdapter
 from snowboard_crawl import settings
 import pymysql
  
+
+from scrapy.exceptions import DropItem
+
+
+class CustomImagePipeline(ImagesPipeline):
+    def file_path(self, request, response=None, info=None, *, item=None):
+        basepath = settings.IMAGES_STORE
+        name = request.url.split('/')[-1]
+        # print("basepath ", basepath)
+        print('正在下载：',name)
+        return os.path.join(basepath,name)
+
+    def get_media_requests(self, item, info):
+        for image_url in item['image_urls']:
+            yield scrapy.Request(image_url)
+
+    def item_completed(self, results, item, info):
+        image_paths = [x['path'] for ok, x in results if ok]
+        if not image_paths:
+            raise DropItem("Item contains no images")
+        adapter = ItemAdapter(item)
+        adapter['image_paths'] = image_paths
+        print(image_paths)
+        return item
+        
+
 class SnowboardCrawlPipeline:
  
     def __init__(self):
@@ -51,7 +81,7 @@ class SnowboardCrawlPipeline:
 
         
  
-        sql = "INSERT INTO gears_gear(title, \
+        sql = "REPLACE INTO gears_gear(title, \
                                     description, \
                                     year,\
                                     slug, \
@@ -66,10 +96,10 @@ class SnowboardCrawlPipeline:
         data = (item['name_processed'], \
             item['description'], \
             item['year_processed'],\
-            item['name'].replace(" ","-").replace("'","").lower(), \
-            item['img_url_processed'], \
-            "2010-01-01", \
-            "2010-01-01", \
+            slugify(item['name']), \
+            item['image_paths'][0], \
+            "2022-01-01", \
+            "2022-01-01", \
             1, 1, 
             brand_id) 
  
@@ -85,12 +115,15 @@ class SnowboardCrawlPipeline:
 
 
 
-from urllib.parse import urlparse
+# from urllib.parse import urlparse
 
 
-class MyImagesPipeline(ImagesPipeline):
+# class MyImagesPipeline(ImagesPipeline):
 
-    def file_path(self, request, response=None, info=None, *, item=None):
-        return 'files/' + os.path.basename(urlparse(request.url).path)
+#     def file_path(self, request, response=None, info=None, *, item=None):
+#         return 'files/' + os.path.basename(urlparse(request.url).path)
+
+
+
 
 

@@ -11,6 +11,8 @@ class EvoSpider(scrapy.Spider):
     start_urls = ['https://www.evo.com/shop/snowboard/snowboards/rpp_400']
     base_url = 'https://www.evo.com'
     folder_name = 'evo/snowboard'
+    IMAGE_DIR = "./tmp"
+
 
     def parse(self, response):
 
@@ -29,13 +31,16 @@ class EvoSpider(scrapy.Spider):
 
         # get structured data 
         structured_data = self.parse_structured_data(response)
+        # print(structured_data)
 
         # get from css html
+        # print (response.css("div.product-thumb").extract())
         for _item in response.css("div.product-thumb"):
             url = self.base_url + _item.css("a::attr(href)").extract_first()
             item_id = _item.css("div::attr(data-productid)").extract_first()
             unique_id = _item.css("a::attr(data-unique-id)").extract_first()
-            img_url = _item.css("img::attr(data-src)").extract_first()
+            # img_url = _item.css("img::attr(data-src)").extract_first()
+            img_url = _item.css("img::attr(src)").extract_first()
             # print(_item.extract())
             # print(url)
             # print(img_url)
@@ -43,17 +48,25 @@ class EvoSpider(scrapy.Spider):
             # print(structured_data[unique_id]["price"])
             # print(structured_data[unique_id]["name"])
             # print(structured_data[unique_id]["brand"])
+            if img_url == "": self.log("Error - no img_url for %s" %url)
             item = { "unique_id": unique_id,
                      "item_id": item_id,
                      "url": url,
-                     "img_url": img_url,
+                     # "img_url": img_url,
                      "price": structured_data[unique_id]["price"],
                      "name": structured_data[unique_id]["name"],
                      "brand": structured_data[unique_id]["brand"],
+                     "image_urls": [img_url],
+                     # "images": [img_url]
+                     
                    }
+
+            # yield item
             yield scrapy.Request(url = url, callback=self.parse_item_page,
                                  meta={'item': item})
-            # break
+
+
+            break
             
 
 
@@ -87,7 +100,7 @@ class EvoSpider(scrapy.Spider):
             description = response.css("div.pdp-details-content p ::text").extract_first()
             item["description"] = description
         except:
-            self.log("Error while retrieving parse_item_page Product")
+            self.log("%s - Error while retrieving parse_item_page Product" %item["name"])
             item["description"] = None
 
         try:
@@ -100,7 +113,7 @@ class EvoSpider(scrapy.Spider):
             item["feature"] = feature
 
         except:
-            self.log("Error while retrieving parse_item_page Product")
+            self.log("%s - Error while retrieving parse_item_page Product" %item["name"])
             item["feature"] = None
 
         try:
@@ -113,7 +126,7 @@ class EvoSpider(scrapy.Spider):
             item["spec"] = spec
 
         except:
-            self.log("Error while retrieving parse_item_page Specs")
+            self.log("%s - Error while retrieving parse_item_page Specs" %item["name"])
             item["spec"] = None
 
         try:    
@@ -131,23 +144,34 @@ class EvoSpider(scrapy.Spider):
             self.log("Error while retrieving parse_item_page Size Table")
             item["size_table"] = None
 
+
+
+
         # Post Processing of some fields
         item["name_processed"] = ""
         item["year_processed"] = 0
-        item["women_processed"] = False
-        item["img_url_processed"] = ""
+        # item["women_processed"] = False
+        # item["img_url_processed"] = ""
+
+
+
 
         tmpName = item["name"].replace(item["brand"],"").lstrip()
         
         try:
-            if tmpName.split(" ")[-1] + 0:
+            if int(tmpName.split(" ")[-1]) + 0:
                 item["year_processed"] = tmpName.split(" ")[-1]
+                tmpName = tmpName.replace(item["year_processed"],"").rstrip()
         except:
-            item["year_processed"] = 0
-        
+            self.log("Error while retrieving year for item %s" %item["name"])
+
+        item["name_processed"] = tmpName
+        # item["name_processed"] = item["name"]
+
         try:
-            if "Women" in item["name"]:
-                item["women_processed"] = True
+            # if "Women" in item["name"]: item["women_processed"] = True
+
+            """
             if " - " in item["name"]:
                 item["name_processed"] = tmpName.split(" - ")[0].replace(" Snowboard","")
             elif "Snowboard" in item["name"]:
@@ -155,7 +179,11 @@ class EvoSpider(scrapy.Spider):
             else:
                 item["name_processed"] = " ".join(tmpName.split(" ")[0:-1])
 
-            item["img_url_processed"] = "gear/" + item["img_url"].split("/")[-1]
+            """
+            
+
+
+            
 
             # imageItem = ImageItem()
             # imageItem['image_urls'] = item["img_url"]
@@ -166,6 +194,10 @@ class EvoSpider(scrapy.Spider):
         except:
             self.log("Error while Post Processing of some fields")
 
+        # try:
+        #     item["img_url_processed"] = "gear/" + item["img_url"].split("/")[-1]
+        # except:
+        #     item["img_url_processed"] = "gear/no_img.png"
 
 
         yield EvoSnowboardItem(**item)
@@ -175,55 +207,57 @@ class EvoSpider(scrapy.Spider):
 
 
 
-class EvoImageSpider(scrapy.Spider):
-    name = 'evo_image'
-    allowed_domains = ['evo.com']
-    start_urls = ['https://www.evo.com/shop/snowboard/snowboards/rpp_400']
-    base_url = 'https://www.evo.com'
-    folder_name = 'evo/snowboard'
-    custom_settings = {
-        'ITEM_PIPELINES': {
-           'snowboard_crawl.pipelines.MyImagesPipeline': 400,
-           # 'scrapy.pipelines.images.ImagesPipeline': 400,
-        }
-    }
+# class EvoImageSpider(scrapy.Spider):
+#     name = 'evo_image'
+#     allowed_domains = ['evo.com']
+#     start_urls = ['https://www.evo.com/shop/snowboard/snowboards/rpp_400']
+#     base_url = 'https://www.evo.com'
+#     folder_name = 'evo/snowboard'
+#     custom_settings = {
+#         'ITEM_PIPELINES': {
+#            # 'snowboard_crawl.pipelines.MyImagesPipeline': 400,
+#            # 'scrapy.pipelines.images.ImagesPipeline': 400,
+#            'snowboard_crawl.pipelines.CustomImagePipeline': 400,
+           
+#         }
+#     }
 
-    def parse(self, response):
+#     def parse(self, response):
 
-        # pagination
-        if "snowboards/p_" not in response.url :
-            pages = set(response.css("div.results-pagination-numerals a::attr(href)").extract())
-            if "javascript:void(0);" in pages: pages.remove("javascript:void(0);")
-            for eachPage in pages:
-                if eachPage[0] == "#" : eachPage = eachPage[1:]
-                pagination_url = "%s%s" %(self.base_url , eachPage)
-                request = scrapy.Request(url = pagination_url, 
-                                     callback=self.parse,
-                                     )
-                self.log('Pagination crawling %s' % pagination_url)
-                yield request
+#         # pagination
+#         if "snowboards/p_" not in response.url :
+#             pages = set(response.css("div.results-pagination-numerals a::attr(href)").extract())
+#             if "javascript:void(0);" in pages: pages.remove("javascript:void(0);")
+#             for eachPage in pages:
+#                 if eachPage[0] == "#" : eachPage = eachPage[1:]
+#                 pagination_url = "%s%s" %(self.base_url , eachPage)
+#                 request = scrapy.Request(url = pagination_url, 
+#                                      callback=self.parse,
+#                                      )
+#                 self.log('Pagination crawling %s' % pagination_url)
+#                 yield request
 
 
 
-        for _item in response.css("div.product-thumb"):
-            # print(_item.extract())
-            img_url = _item.css("img::attr(src)").extract_first()
-            if img_url:
-                img_url = img_url.replace("https://images.evo.com/imgp/250","https://images.evo.com/imgp/700")
-                item = { 
-                         "image_urls": [ img_url ]
-                       }
-                yield EvoSnowboardImageItem(**item)
-            else:
-                self.log('Problem crawling image %s' % img_url)
+#         for _item in response.css("div.product-thumb"):
+#             # print(_item.extract())
+#             img_url = _item.css("img::attr(src)").extract_first()
+#             if img_url:
+#                 img_url = img_url.replace("https://images.evo.com/imgp/250","https://images.evo.com/imgp/700")
+#                 item = { 
+#                          "image_urls": [ img_url ]
+#                        }
+#                 yield EvoSnowboardImageItem(**item)
+#             else:
+#                 self.log('Problem crawling image %s' % img_url)
 
-    def parse_structured_data(self, response):
+#     def parse_structured_data(self, response):
 
-        data_dict = {}
+#         data_dict = {}
         
-        data_dump = re.match(r".*window\.dataLayerManager\.pushImpressions\((.*)\, \'Results", response.text, re.DOTALL).group(1)
-        data_json = json.loads(data_dump)
-        for element in data_json:
-            data_dict[element["_uniqueId"]] = element
+#         data_dump = re.match(r".*window\.dataLayerManager\.pushImpressions\((.*)\, \'Results", response.text, re.DOTALL).group(1)
+#         data_json = json.loads(data_dump)
+#         for element in data_json:
+#             data_dict[element["_uniqueId"]] = element
 
-        return data_dict
+#         return data_dict

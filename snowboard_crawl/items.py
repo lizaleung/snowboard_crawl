@@ -22,6 +22,9 @@ class EvoSnowboardItem(scrapy.Item):
     year_processed = scrapy.Field()
     women_processed = scrapy.Field()
     img_url_processed = scrapy.Field()
+    image_urls = scrapy.Field()
+    images = scrapy.Field()
+    image_paths = scrapy.Field()
 
 
 class EvoSnowboardImageItem(scrapy.Item):
