@@ -64,8 +64,6 @@ DOWNLOAD_DELAY = 1
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
    'snowboard_crawl.pipelines.SnowboardCrawlPipeline': 3,
-   # 'snowboard_crawl.pipelines.MyImagesPipeline': 2,
-   # 'scrapy.pipelines.images.ImagesPipeline': 2,   
    'snowboard_crawl.pipelines.CustomImagePipeline': 2
 
    }
@@ -92,12 +90,12 @@ ITEM_PIPELINES = {
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
 
-# IMAGES_STORE = './tmp'
+# IMAGES_STORE = 'gear'
 
 
 import os
 
-IMAGES_STORE = os.environ.get("OUTDIR_BASE",'./tmp')
+IMAGES_STORE = os.environ.get("OUTDIR_BASE",'media')
 outdir = "/Users/lizaleung/Documents/Github/snowaddict-django/media/gear"
 
 HTTPERROR_ALLOWED_CODES  =[404]
@@ -110,5 +108,3 @@ MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE")
 MYSQL_USERNAME = os.environ.get("MYSQL_USERNAME")
 MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD")
 
-print(MYSQL_HOST)
-print(MYSQL_USERNAME)

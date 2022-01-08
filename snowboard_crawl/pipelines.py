@@ -1,40 +1,28 @@
-# Define your item pipelines here
-#
-# Don't forget to add your pipeline to the ITEM_PIPELINES setting
-# See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 
-
-# useful for handling different item types with a single interface
-# from itemadapter import ItemAdapter
-
-
-# useful for handling different item types with a single interface
-import json
 import os
 import datetime
 
 from slugify import slugify
 import logging
 
-from scrapy.pipelines.images import ImagesPipeline
-from snowboard_crawl.settings import outdir
-
 import scrapy
+from scrapy.pipelines.images import ImagesPipeline
 
+# useful for handling different item types with a single interface
 from itemadapter import ItemAdapter
 from snowboard_crawl import settings
 import pymysql
- 
 
 from scrapy.exceptions import DropItem
 
 
 class CustomImagePipeline(ImagesPipeline):
     def file_path(self, request, response=None, info=None, *, item=None):
-        basepath = settings.IMAGES_STORE
+        basepath = "gear"
         name = request.url.split('/')[-1]
         # print("basepath ", basepath)
-        print('正在下载：',name)
+        # print('正在下载：',name)
+        logging.info('正在下载： %s' %name)
         return os.path.join(basepath,name)
 
     def get_media_requests(self, item, info):
@@ -45,9 +33,10 @@ class CustomImagePipeline(ImagesPipeline):
         image_paths = [x['path'] for ok, x in results if ok]
         if not image_paths:
             raise DropItem("Item contains no images")
+        else:
+            logging.info(image_paths)
         adapter = ItemAdapter(item)
         adapter['image_paths'] = image_paths
-        print(image_paths)
         return item
         
 
@@ -70,14 +59,13 @@ class SnowboardCrawlPipeline:
         brand_id = 1
         try:
             sql = "select id from gears_brand where name = '%s'" % item['brand']
-
             mycursor = self.cursor
             mycursor.execute(sql)
             sqlretval = mycursor.fetchone()
             brand_id = sqlretval[0]
             # self.log(brand_id)
         except:
-            self.log("error while looking for brand_id for - %s" %item['brand'])
+            logging.warning("error while looking for brand_id for - %s" %item['brand'])
 
         
  
@@ -92,36 +80,25 @@ class SnowboardCrawlPipeline:
                                     contributor_id, \
                                     brand_id ) \
                                     VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) "
- 
+        slug_name = slugify(item['name'])
         data = (item['name_processed'], \
             item['description'], \
             item['year_processed'],\
-            slugify(item['name']), \
+            slug_name, \
             item['image_paths'][0], \
             "2022-01-01", \
             "2022-01-01", \
             1, 1, 
             brand_id) 
  
-        
         self.cursor.execute(sql, data)
+        spider.log("Finished executing sql to db %s" %slug_name)
 
-        # return item
         return
  
     def close_spider(self, spider):
         self.connect.commit()
         self.connect.close()
-
-
-
-# from urllib.parse import urlparse
-
-
-# class MyImagesPipeline(ImagesPipeline):
-
-#     def file_path(self, request, response=None, info=None, *, item=None):
-#         return 'files/' + os.path.basename(urlparse(request.url).path)
 
 
 

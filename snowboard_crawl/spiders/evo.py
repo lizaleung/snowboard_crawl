@@ -11,7 +11,6 @@ class EvoSpider(scrapy.Spider):
     start_urls = ['https://www.evo.com/shop/snowboard/snowboards/rpp_400']
     base_url = 'https://www.evo.com'
     folder_name = 'evo/snowboard'
-    IMAGE_DIR = "./tmp"
 
 
     def parse(self, response):
