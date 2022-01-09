@@ -22,6 +22,7 @@ class CustomImagePipeline(ImagesPipeline):
         name = request.url.split('/')[-1]
         # print("basepath ", basepath)
         # print('正在下载：',name)
+        if name == "clone.jpg": name = slugify(item['name'])
         logging.info('正在下载： %s' %name)
         return os.path.join(basepath,name)
 
