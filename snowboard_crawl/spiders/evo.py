@@ -42,6 +42,8 @@ class EvoSpider(scrapy.Spider):
             img_url = _item.css("img::attr(src)").extract_first()
 
             if img_url == "": self.log("Error - no img_url for %s" %url)
+            if "clone" not in img_url: continue
+            
             item = { "unique_id": unique_id,
                      "item_id": item_id,
                      "url": url,

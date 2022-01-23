@@ -22,7 +22,7 @@ class CustomImagePipeline(ImagesPipeline):
         name = request.url.split('/')[-1]
         # print("basepath ", basepath)
         # print('正在下载：',name)
-        if name == "clone.jpg": name = slugify(item['name'])
+        if name == "clone.jpg": name = slugify(item['name']) + ".jpg"
         logging.info('正在下载： %s' %name)
         return os.path.join(basepath,name)
 
@@ -64,11 +64,11 @@ class SnowboardCrawlPipeline:
             mycursor.execute(sql)
             sqlretval = mycursor.fetchone()
             brand_id = sqlretval[0]
-            # self.log(brand_id)
+            spider.log("brand_id = %s" %brand_id)
         except:
-            logging.warning("error while looking for brand_id for - %s" %item['brand'])
+            spider.log("error while looking for brand_id for - %s" %item['brand'])
 
-        
+        ## Gear
  
         sql = "REPLACE INTO gears_gear(title, \
                                     description, \
@@ -94,6 +94,21 @@ class SnowboardCrawlPipeline:
  
         self.cursor.execute(sql, data)
         spider.log("Finished executing sql to db %s" %slug_name)
+
+        ## GearFeature
+        try:
+            sql = "select id from gears_gear where slug = '%s'" % slug_name
+            mycursor = self.cursor
+            mycursor.execute(sql)
+            sqlretval = mycursor.fetchone()
+            gear_id = sqlretval[0]
+            spider.log("gear_id = %s" %gear_id)
+        except:
+            logging.warning("error while looking for gear_id for - %s" %slug_name)
+
+
+        ## GearSize
+        ## GearSpec
 
         return
  
