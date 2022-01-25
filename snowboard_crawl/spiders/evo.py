@@ -26,7 +26,7 @@ class EvoSpider(scrapy.Spider):
                                      callback=self.parse,
                                      )
                 self.log('Pagination crawling %s' % pagination_url)
-                # yield request
+                yield request
 
         # get structured data 
         structured_data = self.parse_structured_data(response)
@@ -43,7 +43,7 @@ class EvoSpider(scrapy.Spider):
 
             if img_url == "": self.log("Error - no img_url for %s" %url)
             if "clone" not in img_url: continue
-            
+
             item = { "unique_id": unique_id,
                      "item_id": item_id,
                      "url": url,
@@ -156,37 +156,6 @@ class EvoSpider(scrapy.Spider):
 
         item["name_processed"] = tmpName
         # item["name_processed"] = item["name"]
-
-        try:
-            # if "Women" in item["name"]: item["women_processed"] = True
-
-            """
-            if " - " in item["name"]:
-                item["name_processed"] = tmpName.split(" - ")[0].replace(" Snowboard","")
-            elif "Snowboard" in item["name"]:
-                item["name_processed"] = tmpName.split(" Snowboard ")[0]
-            else:
-                item["name_processed"] = " ".join(tmpName.split(" ")[0:-1])
-
-            """
-            
-
-
-            
-
-            # imageItem = ImageItem()
-            # imageItem['image_urls'] = item["img_url"]
-            # yield imageItem
-
-
-
-        except:
-            self.log("Error while Post Processing of some fields")
-
-        # try:
-        #     item["img_url_processed"] = "gear/" + item["img_url"].split("/")[-1]
-        # except:
-        #     item["img_url_processed"] = "gear/no_img.png"
 
 
         yield EvoSnowboardItem(**item)

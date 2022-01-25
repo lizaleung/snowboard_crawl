@@ -91,11 +91,17 @@ class SnowboardCrawlPipeline:
             "2022-01-01", \
             1, 1, 
             brand_id) 
- 
-        self.cursor.execute(sql, data)
-        spider.log("Finished executing sql to db %s" %slug_name)
-
-        ## GearFeature
+        try:
+            self.cursor.execute(sql, data)
+            spider.log("Finished executing sql to db %s" %slug_name)
+            # lastrowid = self.cursor.lastrowid
+            # spider.log("Finished executing sql to db lastrowid %s" %lastrowid)
+        except pymysql.Error as e:
+            spider.log("Error executing sql slug = %s" %slug_name)
+            spider.log(e)
+        
+        ## Get gear_id for later use - 
+        gear_id = 0
         try:
             sql = "select id from gears_gear where slug = '%s'" % slug_name
             mycursor = self.cursor
@@ -106,9 +112,98 @@ class SnowboardCrawlPipeline:
         except:
             logging.warning("error while looking for gear_id for - %s" %slug_name)
 
+        if gear_id != 0:
+            #################
+            ## GearFeature ##
+            #################
+            
+            sql = "INSERT INTO gears_gearfeature (gear_id, attribute, detail) \
+                                        VALUES(%s,%s,%s) "
+            for eachFeature in item["feature"]:
+                data = (gear_id, \
+                        eachFeature, \
+                        item["feature"][eachFeature]
+                        ) 
+                try:
+                    self.cursor.execute(sql, data)
+                    spider.log("Finished executing sql to db gear_id=%s feature=%s" %(gear_id,eachFeature))
+                except pymysql.Error as e:
+                    spider.log("error while executing sql for gearfeature gear_id - %s" %gear_id)
+                    spider.log(e)
 
-        ## GearSize
-        ## GearSpec
+
+            #################
+            ## GearSpec ##
+            #################
+
+            
+            sql = "INSERT INTO gears_gearspec (gear_id, attribute, detail) \
+                                            VALUES(%s,%s,%s) "
+            for eachSpec in item["spec"]:
+                data = (gear_id, \
+                        eachSpec, \
+                        item["spec"][eachSpec]
+                        ) 
+                try:
+                    self.cursor.execute(sql, data)
+                    spider.log("Finished executing sql to db gear_id=%s spec=%s" %(gear_id,eachSpec))
+                except pymysql.Error as e:
+                    spider.log("error while executing sql for gearspec gear_id - %s" %gear_id)
+                    spider.log(e)
+
+
+            #################
+            ## GearSize ##
+            #################
+
+            sql1 = "INSERT INTO gears_gearsize (gear_id, size, size_value) \
+                                            VALUES(%s,%s,%s) "
+
+            sql2 = "INSERT INTO gears_gearsizedetail (gear_size_id, attribute, detail)  \
+                                            VALUES(%s,%s,%s) "
+
+            for eachSize in item["size_table"]:
+                size_value = item["size_table"][eachSize]["Size (cm)"] if "Size (cm)" in item["size_table"][eachSize] else 0
+                data1 = (gear_id, eachSize, size_value) 
+                try:
+                    self.cursor.execute(sql1, data1)
+                    spider.log("Finished executing sql to db gear_id=%s %s %s" %(gear_id, eachSize, size_value))
+
+                except pymysql.Error as e:
+                    spider.log("error while executing sql for gearsize gear_id - %s %s %s" %(gear_id, eachSize, size_value))
+                    spider.log(e)
+
+
+                ## Get gear_size_id for later use - 
+                gear_size_id = 0
+                try:
+                    sql = "select id from gears_gearsize where gear_id = '%s' and size = '%s'  " % (gear_id, eachSize)
+                    mycursor = self.cursor
+                    mycursor.execute(sql)
+                    sqlretval = mycursor.fetchone()
+                    gear_size_id = sqlretval[0]
+                    spider.log("gear_size_id = %s" %gear_size_id)
+                except:
+                    logging.warning("error while looking for gear_id %s size %s" %(gear_id,eachSize))
+
+
+
+
+                for eachSizeDetail in item["size_table"][eachSize]:
+                    data2 = (gear_size_id, \
+                            eachSizeDetail, \
+                            item["size_table"][eachSize][eachSizeDetail] \
+                            ) 
+
+                    try:
+                        self.cursor.execute(sql2, data2)
+                        spider.log("Finished executing sql to db gear_id=%s size=%s sizedetail=%s" %(gear_id,eachSize, eachSizeDetail))
+                    except pymysql.Error as e:
+                        spider.log("error while executing sql for gearsizedetail gear_id %s - size %s - sizedetail %s" %(gear_id, eachSize,eachSizeDetail))
+                        spider.log(e)
+
+
+
 
         return
  
