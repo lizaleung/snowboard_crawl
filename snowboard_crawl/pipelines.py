@@ -57,6 +57,8 @@ class SnowboardCrawlPipeline:
  
     def process_item(self, item, spider):
 
+        slug_name = slugify(item['name'])
+
         brand_id = 1
         try:
             sql = "select id from gears_brand where name = '%s'" % item['brand']
@@ -68,9 +70,14 @@ class SnowboardCrawlPipeline:
         except:
             spider.log("error while looking for brand_id for - %s" %item['brand'])
 
+        if item['year_processed'] == 0: 
+            spider.log("Error - slug = %s because year is 0" %slug_name)
+            return
+
+
         ## Gear
  
-        sql = "REPLACE INTO gears_gear(title, \
+        sql = "INSERT INTO gears_gear(title, \
                                     description, \
                                     year,\
                                     slug, \
@@ -79,17 +86,20 @@ class SnowboardCrawlPipeline:
                                     updated_at, \
                                     category_id, \
                                     contributor_id, \
+                                    is_trending,\
                                     brand_id ) \
-                                    VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) "
-        slug_name = slugify(item['name'])
+                                    VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) "
+        
         data = (item['name_processed'], \
             item['description'], \
             item['year_processed'],\
             slug_name, \
             item['image_paths'][0], \
-            "2022-01-01", \
-            "2022-01-01", \
-            1, 1, 
+            datetime.datetime.now().strftime('%Y-%m-%d'), \
+            datetime.datetime.now().strftime('%Y-%m-%d'), \
+            1, \
+            1, \
+            0,
             brand_id) 
         try:
             self.cursor.execute(sql, data)

@@ -38,11 +38,19 @@ class EvoSpider(scrapy.Spider):
             url = self.base_url + _item.css("a::attr(href)").extract_first()
             item_id = _item.css("div::attr(data-productid)").extract_first()
             unique_id = _item.css("a::attr(data-unique-id)").extract_first()
+
             # img_url = _item.css("img::attr(data-src)").extract_first()
             img_url = _item.css("img::attr(src)").extract_first()
-
+            if "imgp/250" in img_url: img_url = img_url.replace("imgp/250","imgp/500")
             if img_url == "": self.log("Error - no img_url for %s" %url)
-            if "clone" not in img_url: continue
+
+            # if "clone" not in img_url: continue
+            if "- Used" in structured_data[unique_id]["name"]: 
+                self.log("Skipping because Used - %s" %structured_data[unique_id]["name"])
+                continue
+            if "- Blem" in structured_data[unique_id]["name"]: 
+                self.log("Skipping because Blem - %s" %structured_data[unique_id]["name"])
+                continue
 
             item = { "unique_id": unique_id,
                      "item_id": item_id,
@@ -51,7 +59,6 @@ class EvoSpider(scrapy.Spider):
                      "name": structured_data[unique_id]["name"],
                      "brand": structured_data[unique_id]["brand"],
                      "image_urls": [img_url],
-                     
                    }
 
             yield scrapy.Request(url = url, callback=self.parse_item_page,
@@ -86,6 +93,15 @@ class EvoSpider(scrapy.Spider):
         """
 
         item = response.meta["item"]
+
+        try:
+            # Title
+            title = response.css("h1.pdp-header-title::text").extract_first()
+            item["name"] = title
+        except:
+            self.log("%s - Error while retrieving parse_item_page Title" %item["name"])
+            # use previous retrieved name from structured data
+
 
         try:
             # Product
@@ -152,11 +168,10 @@ class EvoSpider(scrapy.Spider):
                 item["year_processed"] = tmpName.split(" ")[-1]
                 tmpName = tmpName.replace(item["year_processed"],"").rstrip()
         except:
-            self.log("Error while retrieving year for item %s" %item["name"])
+            self.log("Error - cannot retrieve year for item %s" %item["name"])
 
         item["name_processed"] = tmpName
         # item["name_processed"] = item["name"]
-
 
         yield EvoSnowboardItem(**item)
 
